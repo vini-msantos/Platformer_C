@@ -252,4 +252,3 @@ void player_update_editor(Player* p) {
     p->pos.x = max(PLAYER_WIDTH/2.0, p->pos.x);
     p->pos.y = min(SCREEN_HEIGHT, p->pos.y);
 }
-
