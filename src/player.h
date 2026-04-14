@@ -34,5 +34,6 @@ extern Player player;
 extern int coins;
 
 Player new_player(int x, int y);
-void update_player(Player* p);
+void player_update_playing(Player* p);
+void player_update_editor(Player* p);
 #endif

@@ -9,5 +9,6 @@
 #define JUMP_KEY KEY_SPACE
 #define DASH_KEY KEY_J
 #define LOOK_DOWN_KEY KEY_S
+#define SWITCH_MODE_KEY KEY_ENTER
 
 #endif

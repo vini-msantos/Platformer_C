@@ -1,6 +1,7 @@
 #include <math.h>
 #include <raylib.h>
 #include "player.h"
+#include "state.h"
 #include "util.h"
 #include "level.h"
 #include "controls.h"
@@ -71,7 +72,10 @@ void player_collide_spike(Player* p) {
 }
 
 void player_collide_trampoline(Player* p) {
-    if (!p->jumping && p->vel.y > 0) player_jump(p, JUMP_FORCE*2);
+    if (!p->jumping && p->vel.y > 0) {
+        player_jump(p, JUMP_FORCE*2);
+        if (p->dash_timer == 0) p->can_dash = true;
+    }
 }
 
 void player_on_collide(Player* p, Coord c, Vector2 collision_point) {    
@@ -197,30 +201,55 @@ void player_handle_dashing(Player* p) {
     if (IsKeyUp(DASH_KEY) && fabsf(p->vel.x) < MAX_VEL_X) p->running = false;
 }
 
-void player_handle_input(Player* p) {
+void player_handle_input_playing(Player* p) {
+    if (IsKeyPressed(SWITCH_MODE_KEY)) state_editor_enter();
+
+    if (!p->controllable) return;
     player_handle_moving(p);
     player_handle_dashing(p);
     player_handle_jumping(p);
+}
+
+void player_handle_input_editor(Player* p) {
+    float dt = GetFrameTime();
+    if (IsKeyPressed(SWITCH_MODE_KEY)) state_playing_enter();
+    float mult = (IsKeyDown(DASH_KEY)) ? 1.0 : 0.5;
+    
+    p->pos.x += ACCEL * mult * dt * (IsKeyDown(RIGHT_KEY) - IsKeyDown(LEFT_KEY));
+    p->pos.y += ACCEL * mult * dt * (IsKeyDown(LOOK_DOWN_KEY) - IsKeyDown(UP_KEY));
+}
+
+void player_check_fell(Player* p) {
+    if (p->pos.y >= SCREEN_HEIGHT+PLAYER_HEIGHT && p->collision) player_die(p, 1.5*JUMP_FORCE); // CHECK FELL OF MAP
+    if (p->pos.y >= 1.5*SCREEN_HEIGHT && !p->collision) {
+        state_editor_enter();
+        p->pos.y = 700;
+    }
 }
 
 void player_normalize(Player* p) {
     p->pos.x = max(p->pos.x, PLAYER_WIDTH/2.0);
     if (p->pos.x == PLAYER_WIDTH/2.0) p->vel.x = max(p->vel.x, 0);
 
-    if (p->pos.y >= SCREEN_HEIGHT+PLAYER_HEIGHT && p->collision) player_die(p, 1.5*JUMP_FORCE); // CHECK FELL OF MAP
     p->vel.y = min(p->vel.y, MAX_VEL_Y);
 }
 
-void update_player(Player* p) {
-    float dt = GetFrameTime();
-
+void player_update_playing(Player* p) {
     if (!player_is_grounded(p)) player_in_air(p);
     else player_allow_jump(p); 
 
-    if (p->controllable) player_handle_input(p);
+    player_handle_input_playing(p);
     player_apply_vel(p);    
 
     if (p->collision) player_tile_collision(p);
+    player_check_fell(p);
     player_normalize(p);
+}
+
+void player_update_editor(Player* p) {
+    player_handle_input_editor(p);
+
+    p->pos.x = max(PLAYER_WIDTH/2.0, p->pos.x);
+    p->pos.y = min(SCREEN_HEIGHT, p->pos.y);
 }
 

@@ -10,18 +10,15 @@ Tile selected = AIR;
 void level_load(char* path) {
     FILE* file = fopen(path, "r");
     if (file == NULL) {
-        printf("ERROR: could not load level from file: \"%s\"", path);
+        printf("ERROR: could not load level from file: \"%s\"\n", path);
         return;
     }
+  
+    char line[150];
+    for (int i = 0; i < LEVEL_HEIGHT; i++) {
+        if (fgets(line, 102, file) == NULL) printf("ERROR: error parsing level data. i = %d, EOF = %d\n", i, feof(file));
 
-    int width, height;
-    fscanf(file, "%d %d\n", &width, &height); // TODO: MAKE LEVEL SIZE DYNAMIC
-    
-    char line[102];
-    for (int i = 0; i < height; i++) {
-        if (fgets(line, 102, file) == NULL) printf("ERROR: error parsing level data.");
-
-        for (int j = 0; j < width; j++) {
+        for (int j = 0; j < LEVEL_WIDTH; j++) {
             level[i][j] = line[j];
         }
     }
@@ -32,12 +29,10 @@ void level_load(char* path) {
 void level_save(char* path) {
     FILE* file = fopen(path, "w");
     if (file == NULL) {
-        printf("ERROR: could not save level to file: \"%s\"", path);
+        printf("ERROR: could not save level to file: \"%s\"\n", path);
         return;
     }
-
-    fprintf(file, "%d %d\n", LEVEL_WIDTH, LEVEL_HEIGHT);
-    
+   
     char line[LEVEL_WIDTH+1];
     line[LEVEL_WIDTH] = '\0';
 

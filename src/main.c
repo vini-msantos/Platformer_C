@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include "player.h"
 #include "level.h"
+#include "state.h"
 #include "rendering.h"
-#include "editor.h"
 
 void handle_drawing(void) {
     BeginDrawing();
@@ -11,17 +11,15 @@ void handle_drawing(void) {
 
     draw_level();
     draw_player(&player);
-    draw_editor_cursor();
+    if (state == EDITOR) draw_editor_cursor();
     
     EndDrawing();
 }
 
 void setup(void) {
-    player = new_player(1000, 500);
+    player = new_player(200, 750);
     level_clear(level);
-    level_set_rect(level, (Rectangle){5, 25, 75, 3}, GROUND);
-    level_set_rect(level, (Rectangle){20, 21, 1, 4}, GROUND);
-    level_set_rect(level, (Rectangle){8, 20, 4, 1}, PLATFORM);
+    level_set_rect(level, (Rectangle){0, 27, 5, 3}, GROUND);
 }
 
 int main() {
@@ -33,9 +31,7 @@ int main() {
     while (!WindowShouldClose()) {
         handle_drawing();
 
-        update_player(&player);
-        update_editor();
-        update_camera();
+        state_update();
     }
 
     CloseWindow();

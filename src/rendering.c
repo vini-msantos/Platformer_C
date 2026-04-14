@@ -115,7 +115,11 @@ void draw_editor_cursor(void) {
         5, RED);
 }
 
-void update_camera(void) {
+void update_camera_playing(void) {
     Vector2 offset = (IsKeyDown(LOOK_DOWN_KEY)) ? Vec(0, SCREEN_HEIGHT/5.0) : Vec(0, -SCREEN_HEIGHT/8.0); 
     lerp_camera(vec_add(player.pos, offset));
+}
+
+void update_camera_editor(void) {
+    lerp_camera(vec_add(player.pos, Vec(0, -SCREEN_HEIGHT/8.0)));
 }
