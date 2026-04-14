@@ -26,21 +26,54 @@ void lerp_camera(Vector2 pos) {
     if (fabsf(force.x) < 0.1 && fabsf(force.y) < 0.1) camera = pos;
 }
 
-void draw_tile(int i, int j) {
-    Tile tile = level[i][j];
-    if (tile == AIR) return;
-    Vector2 pos = point_on_camera(coord_to_point(coord(i, j)));
-
-    if (tile == PLATFORM) return DrawRectangle(pos.x, pos.y, TILE_SIZE, TILE_SIZE/4.0, BROWN);
-    
-    Color color = ((i+j) % 2) ? GREEN : DARKGREEN;
+void draw_ground_tile(Coord c, Vector2 pos) {
+    Color color = ((c.i+c.j) % 2) ? GREEN : DARKGREEN;
     DrawRectangle(pos.x, pos.y, TILE_SIZE, TILE_SIZE, color);
+   
+}
+
+void draw_platform(Vector2 pos) {
+    DrawRectangle(pos.x, pos.y, TILE_SIZE, TILE_SIZE/4.0, BROWN);
+}
+
+void draw_coin(Vector2 pos) {
+    DrawCircle(pos.x + TILE_SIZE/2.0, pos.y + TILE_SIZE/2.0, COIN_RADIUS, YELLOW);
+}
+
+void draw_trampoline(Vector2 pos) {
+    float thick = TILE_SIZE/8.0;
+    float sz = TILE_SIZE;
+    float mrg = thick/2;
+    Vector2 p1 = vec_add(pos, Vec(thick, mrg));
+    Vector2 p2 = vec_add(p1, Vec(sz-2*thick, 0));
+    Vector2 p3 = vec_add(p1, Vec(0, sz-2*mrg));
+    Vector2 p4 = vec_add(p3, Vec(sz-2*thick, 0));
+    // Draw Middle Segment:
+    DrawLineEx(vec_add(p2, Vec(-thick, 0)), vec_add(p3, Vec(thick, 0)), thick, GRAY);
+    // Draw Top and Bottom:
+    DrawLineEx(p1, p2, thick, RED);
+    DrawLineEx(p3, p4, thick, RED);
+}
+
+void draw_tile(Coord c) {
+    Tile tile = level[c.i][c.j];
+    if (tile == AIR) return;
+    Vector2 pos = point_on_camera(coord_to_point(coord(c.i, c.j)));
+
+    switch (tile) {
+        case GROUND:     return draw_ground_tile(c, pos);
+        case PLATFORM:   return draw_platform(pos);
+        case COIN:       return draw_coin(pos);
+        case TRAMPOLINE: return draw_trampoline(pos);
+        default:         return;
+    }
+    
 }
 
 void draw_level(void) {
     for (int i = 0; i < LEVEL_HEIGHT; i++) {
         for (int j = 0; j < LEVEL_WIDTH; j++) {
-            draw_tile(i, j);
+            draw_tile(coord(i, j));
         }
     }
 }

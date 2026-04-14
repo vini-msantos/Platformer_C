@@ -28,6 +28,7 @@ typedef struct Player {
 } Player;
 
 extern Player player;
+extern int coins;
 
 Player new_player(int x, int y);
 void update_player(Player* p);

@@ -8,6 +8,7 @@
 #define LEVEL_HEIGHT 30
 
 #define TILE_SIZE 64
+#define COIN_RADIUS TILE_SIZE/3.0
 typedef enum Tile {
     AIR = ' ',
     GROUND = '#',

@@ -1,3 +1,4 @@
+#include <math.h>
 #include <raylib.h>
 #include "level.h"
 #include "util.h"
@@ -27,7 +28,7 @@ void level_set_rect(Level level, Rectangle rec, Tile tile) {
 
 Coord point_to_coord(Vector2 p) {
     return (Coord) {
-        .i = LEVEL_HEIGHT - (SCREEN_HEIGHT-p.y)/TILE_SIZE,
+        .i = floor(LEVEL_HEIGHT - (SCREEN_HEIGHT-p.y)/(float)TILE_SIZE),
         .j = p.x/TILE_SIZE,
     };
 }
@@ -51,13 +52,13 @@ Tile level_tile_point(Level level, Vector2 p) {
 
 bool tile_should_collide_x(Coord c, Player* p) {
     Tile tile = level_tile_coord(level, c);
-    return tile != AIR && tile != PLATFORM;
+    return tile == GROUND || tile == SPIKE;
 }
 
 bool tile_should_collide_y(Coord c, Player* p) {
     Tile tile = level_tile_coord(level, c);
     if (tile == PLATFORM) return p->vel.y >= 0 && p->pos.y <= coord_to_point(c).y+TILE_SIZE/4.0;
-    return tile != AIR;
+    return tile == GROUND || tile == SPIKE;
 }
 
 bool tile_check_collision(Coord c) {
@@ -65,5 +66,6 @@ bool tile_check_collision(Coord c) {
 }
 
 bool tile_is_solid(Coord c) {
-    return level_tile_coord(level, c) != AIR;
+    Tile tile = level_tile_coord(level, c);
+    return tile != AIR && tile != COIN;
 }
