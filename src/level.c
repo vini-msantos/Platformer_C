@@ -48,3 +48,22 @@ Tile level_tile_coord(Level level, Coord c) {
 Tile level_tile_point(Level level, Vector2 p) {
     return level_tile_coord(level, point_to_coord(p));
 }
+
+bool tile_should_collide_x(Coord c, Player* p) {
+    Tile tile = level_tile_coord(level, c);
+    return tile != AIR && tile != PLATFORM;
+}
+
+bool tile_should_collide_y(Coord c, Player* p) {
+    Tile tile = level_tile_coord(level, c);
+    if (tile == PLATFORM) return p->vel.y >= 0 && p->pos.y <= coord_to_point(c).y+TILE_SIZE/4.0;
+    return tile != AIR;
+}
+
+bool tile_check_collision(Coord c) {
+    return level_tile_coord(level, c) != AIR;
+}
+
+bool tile_is_solid(Coord c) {
+    return level_tile_coord(level, c) != AIR;
+}

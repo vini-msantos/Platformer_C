@@ -2,6 +2,7 @@
 #define LEVEL_H
 
 #include <raylib.h>
+#include "player.h"
 
 #define LEVEL_WIDTH 100
 #define LEVEL_HEIGHT 30
@@ -36,6 +37,9 @@ Vector2 coord_to_point(Coord coord); // RETURNS TOP LEFT CORNER OF TILE
 Tile level_tile_coord(Level level, Coord coord);
 Tile level_tile_point(Level level, Vector2 point);
 
-
+bool tile_check_collision(Coord c);
+bool tile_should_collide_x(Coord c, Player* player);
+bool tile_should_collide_y(Coord c, Player* player);
+bool tile_is_solid(Coord c);
 
 #endif

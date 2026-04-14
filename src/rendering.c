@@ -29,9 +29,11 @@ void lerp_camera(Vector2 pos) {
 void draw_tile(int i, int j) {
     Tile tile = level[i][j];
     if (tile == AIR) return;
-
-    Color color = ((i+j) % 2) ? GREEN : DARKGREEN;
     Vector2 pos = point_on_camera(coord_to_point(coord(i, j)));
+
+    if (tile == PLATFORM) return DrawRectangle(pos.x, pos.y, TILE_SIZE, TILE_SIZE/4.0, BROWN);
+    
+    Color color = ((i+j) % 2) ? GREEN : DARKGREEN;
     DrawRectangle(pos.x, pos.y, TILE_SIZE, TILE_SIZE, color);
 }
 
@@ -52,6 +54,19 @@ void draw_player(Player* p) {
         PLAYER_HEIGHT,
         RED
     );
+}
+
+void draw_editor_cursor(void) {
+    Coord c = point_to_coord(mouse_position_absolute());
+    Vector2 p = coord_to_point(c);
+    DrawRectangleLinesEx(
+        (Rectangle) {
+            .x = point_on_camera(p).x,
+            .y = point_on_camera(p).y,
+            .width = TILE_SIZE,
+            .height = TILE_SIZE
+        },
+        5, RED);
 }
 
 void update_camera(void) {

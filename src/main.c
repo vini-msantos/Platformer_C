@@ -3,13 +3,15 @@
 #include "player.h"
 #include "level.h"
 #include "rendering.h"
+#include "editor.h"
 
 void handle_drawing(void) {
     BeginDrawing();
     ClearBackground(SKYBLUE);
 
-    draw_player(&player);
     draw_level();
+    draw_player(&player);
+    draw_editor_cursor();
     
     EndDrawing();
 }
@@ -19,7 +21,7 @@ void setup(void) {
     level_clear(level);
     level_set_rect(level, (Rectangle){5, 25, 75, 3}, GROUND);
     level_set_rect(level, (Rectangle){20, 21, 1, 4}, GROUND);
-    level[29][0] = GROUND; // DEBUG
+    level_set_rect(level, (Rectangle){8, 20, 4, 1}, PLATFORM);
 }
 
 int main() {
@@ -32,6 +34,7 @@ int main() {
         handle_drawing();
 
         update_player(&player);
+        update_editor();
         update_camera();
     }
 

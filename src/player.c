@@ -25,9 +25,9 @@ Player new_player(int x, int y) {
 }
 
 bool player_is_grounded(Player* p) {
-    Vector2 bot_right_point = vec_add(p->pos, Vec(PLAYER_WIDTH/2.0, 0.5));
-    Vector2 bot_left_point = vec_add(p->pos, Vec(-PLAYER_WIDTH/2.0, 0.5));
-    return level_tile_point(level, bot_left_point) != AIR || level_tile_point(level, bot_right_point) != AIR;
+    Coord c_left = point_to_coord(vec_add(p->pos, Vec(PLAYER_WIDTH/2.0, 0.5)));
+    Coord c_right = point_to_coord(vec_add(p->pos, Vec(-PLAYER_WIDTH/2.0, 0.5)));
+    return tile_should_collide_y(c_left, p) || tile_should_collide_y(c_right, p);
 }
 
 void player_hitbox_offsets(Player* p, Vector2* buf) {
@@ -39,27 +39,34 @@ void player_hitbox_offsets(Player* p, Vector2* buf) {
     buf[5] = Vec(-PLAYER_WIDTH/2.0, -PLAYER_HEIGHT);
 }
 
-bool tile_should_collide(Coord c, Player* p) {
-    Tile tile = level_tile_coord(level, c);
-    if (tile == PLATFORM && point_to_coord(p->pos).i <= c.i) return true;
-    return tile != AIR;
+void player_on_collide(Player* p, Coord c, Vector2 collision_point) {    
+    // Vector2 tile_center = vec_add(coord_to_point(c), Vec(TILE_SIZE/2.0, TILE_SIZE/2.0));
 }
 
-void player_adjust_point(Player* p, Vector2 point, Coord c) {
-    Vector2 point_offset = vec_sub(p->pos, point);
+void player_collide_solid(Player* p, Coord c, Vector2 collision_point) {
+    Vector2 offset = vec_sub(p->pos, collision_point);
     Vector2 tile_center = vec_add(coord_to_point(c), Vec(TILE_SIZE/2.0, TILE_SIZE/2.0));
-    Vector2 diff = vec_sub(point, tile_center);
+    Vector2 diff = vec_sub(collision_point, tile_center);
 
-    Coord neighbor_x = (Coord) {c.i, c.j + signf(diff.x)};
-    Coord neighbor_y = (Coord) {c.i + signf(diff.y), c.j};
+    Coord x_neighbor = (Coord) {c.i, c.j + signf(diff.x)};
+    Coord y_neighbor = (Coord) {c.i + signf(diff.y), c.j};
 
-    if (fabsf(diff.x) >= fabsf(diff.y) && !tile_should_collide(neighbor_x, p)) {
+    bool collide_x = tile_should_collide_x(c, p) && !tile_should_collide_x(x_neighbor, p);
+    bool collide_y = tile_should_collide_y(c, p) && !tile_should_collide_y(y_neighbor, p);
+
+    if (collide_x && fabsf(diff.x) >= fabsf(diff.y)) {
         p->vel.x = 0;
-        p->pos.x = point_offset.x + tile_center.x + signf(diff.x) * TILE_SIZE/1.99;
-    } else if (!tile_should_collide(neighbor_y, p)) {
+        p->pos.x = offset.x + tile_center.x + signf(diff.x) * TILE_SIZE/1.99;
+    } else if (collide_y) {
         p->vel.y = 0;
-        p->pos.y = point_offset.y + tile_center.y + signf(diff.y) * TILE_SIZE/1.99;
+        p->pos.y = offset.y + tile_center.y + signf(diff.y) * TILE_SIZE/1.99;
     }
+
+    player_on_collide(p, c, collision_point);
+}
+
+void player_check_collision(Player* p, Vector2 point, Coord c) {
+    if (tile_is_solid(c)) player_collide_solid(p, c, point);
 }
 
 void player_tile_collision(Player* p) {
@@ -68,10 +75,12 @@ void player_tile_collision(Player* p) {
     for (int i = 0; i < 6; i++) {
         Vector2 point = vec_add(p->pos, points[i]);
         Coord coord = point_to_coord(point);
-        if (!tile_should_collide(coord, p)) continue;
-        player_adjust_point(p, point, coord);     
+
+        if (!tile_check_collision(coord)) continue;
+        player_check_collision(p, point, coord);     
     }
 }
+
 
 bool player_can_jump(Player* p) {
     return player_is_grounded(p) || p->coyote_timer > 0;
@@ -109,24 +118,23 @@ void player_handle_jumping(Player* p) {
 }
 
 void player_handle_moving(Player* p) {
-    float dt = GetFrameTime();
-
     int x_dir = IsKeyDown(RIGHT_KEY) - IsKeyDown(LEFT_KEY);
     if (x_dir != 0) last_dir = x_dir;
 
-    bool grounded = player_is_grounded(p);
+    float dt       = GetFrameTime();
+    bool  grounded = player_is_grounded(p);
     float friction = (grounded) ? FRICTION : AIR_DRAG;
-    float control = (grounded) ? 1.0 : AIR_CONTROL;
-    int mult = (x_dir != signf(p->vel.x)) ? 5 : 1;
+    float control  = (grounded) ? 1.0 : AIR_CONTROL;
+    int   dir_mult = (x_dir != signf(p->vel.x)) ? 5 : 1;
+    float run_mult = (p->running) ? 1 : 0.5;  
 
     if (x_dir == 0 || fabsf(p->vel.x) > MAX_VEL_X) {
         p->vel.x -= (p->vel.x * friction/150 + friction * signf(p->vel.x)) * dt;
     }
     if (fabsf(p->vel.x) < 1) p->vel.x = 0;
 
-    float sprint_mult = (p->running) ? 1 : 0.5;  
-    if (signf(p->vel.x) != x_dir || fabsf(p->vel.x) < MAX_VEL_X * sprint_mult) {
-        p->vel.x += x_dir * ACCEL * control * mult * dt;
+    if (signf(p->vel.x) != x_dir || fabsf(p->vel.x) < MAX_VEL_X * run_mult) {
+        p->vel.x += x_dir * ACCEL * control * dir_mult * dt;
     }
 }
 

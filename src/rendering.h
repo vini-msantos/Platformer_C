@@ -13,5 +13,6 @@ Vector2 point_on_camera(Vector2 p);
 void update_camera(void);
 void draw_level(void);
 void draw_player(Player* p);
+void draw_editor_cursor(void);
 
 #endif
