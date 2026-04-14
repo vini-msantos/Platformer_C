@@ -22,6 +22,9 @@ Vector2 vec_add(Vector2 a, Vector2 b);
 Vector2 vec_sub(Vector2 a, Vector2 b);
 Vector2 vec_mul(Vector2 a, Vector2 b);
 Vector2 vec_scale(Vector2 a, float scalar);
+Vector2 vec_addx(Vector2 a, float x);
+Vector2 vec_addy(Vector2 a, float y);
+Vector2 vec_addxy(Vector2 a, float x, float y);
 float   vec_dist(Vector2 a, Vector2 b);
 
 #endif

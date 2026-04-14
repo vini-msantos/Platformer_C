@@ -22,7 +22,10 @@ typedef struct Player {
     Vector2 vel;
     bool jumping;
     bool running;
+    bool controllable;
+    bool visible;
     bool can_dash;
+    bool collision;
     float dash_timer;
     float coyote_timer;
 } Player;

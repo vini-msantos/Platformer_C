@@ -7,6 +7,18 @@ int signf(float x) {
     return x > 0;
 }
 
+Vector2 vec_addx(Vector2 a, float x) {
+    return Vec(a.x + x, a.y);
+}
+
+Vector2 vec_addy(Vector2 a, float y) {
+    return Vec(a.x, a.y + y);
+}
+
+Vector2 vec_addxy(Vector2 a, float x, float y) {
+    return Vec(a.x + x, a.y + y);
+}
+
 float vec_dist(Vector2 a, Vector2 b) {
     return sqrt((b.x-a.x)*(b.x-a.x) + (b.y-a.y)*(b.y-a.y));
 }

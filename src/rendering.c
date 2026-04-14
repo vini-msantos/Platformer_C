@@ -3,6 +3,7 @@
 #include "rendering.h"
 #include "level.h"
 #include "util.h"
+#include "controls.h"
 
 Vector2 camera = (Vector2) {750, 500};
 
@@ -14,7 +15,7 @@ Vector2 mouse_position_absolute(void) {
 }
 
 Vector2 point_on_camera(Vector2 p) {
-    return vec_add(vec_sub(p, camera), Vec(SCREEN_WIDTH/2.0, SCREEN_HEIGHT/2.0));
+    return vec_addxy(vec_sub(p, camera), SCREEN_WIDTH/2.0, SCREEN_HEIGHT/2.0);
 }
 
 void lerp_camera(Vector2 pos) {
@@ -29,7 +30,6 @@ void lerp_camera(Vector2 pos) {
 void draw_ground_tile(Coord c, Vector2 pos) {
     Color color = ((c.i+c.j) % 2) ? GREEN : DARKGREEN;
     DrawRectangle(pos.x, pos.y, TILE_SIZE, TILE_SIZE, color);
-   
 }
 
 void draw_platform(Vector2 pos) {
@@ -40,14 +40,24 @@ void draw_coin(Vector2 pos) {
     DrawCircle(pos.x + TILE_SIZE/2.0, pos.y + TILE_SIZE/2.0, COIN_RADIUS, YELLOW);
 }
 
+void draw_spike(Vector2 pos) {
+    float thick = TILE_SIZE/6.0;
+    Vector2 p1 = vec_addxy(pos, thick, thick); 
+    Vector2 p2 = vec_addx(p1, TILE_SIZE-2*thick);
+    Vector2 p3 = vec_addy(p1, TILE_SIZE-2*thick);
+    Vector2 p4 = vec_addx(p3, TILE_SIZE-2*thick);
+    DrawLineEx(p1, p4, thick, GRAY);
+    DrawLineEx(p2, p3, thick, GRAY);
+}
+
 void draw_trampoline(Vector2 pos) {
     float thick = TILE_SIZE/8.0;
     float sz = TILE_SIZE;
     float mrg = thick/2;
-    Vector2 p1 = vec_add(pos, Vec(thick, mrg));
-    Vector2 p2 = vec_add(p1, Vec(sz-2*thick, 0));
-    Vector2 p3 = vec_add(p1, Vec(0, sz-2*mrg));
-    Vector2 p4 = vec_add(p3, Vec(sz-2*thick, 0));
+    Vector2 p1 = vec_addxy(pos, thick, mrg);
+    Vector2 p2 = vec_addx(p1, sz-2*thick);
+    Vector2 p3 = vec_addy(p1, sz-2*mrg);
+    Vector2 p4 = vec_addx(p3, sz-2*thick);
     // Draw Middle Segment:
     DrawLineEx(vec_add(p2, Vec(-thick, 0)), vec_add(p3, Vec(thick, 0)), thick, GRAY);
     // Draw Top and Bottom:
@@ -65,6 +75,7 @@ void draw_tile(Coord c) {
         case PLATFORM:   return draw_platform(pos);
         case COIN:       return draw_coin(pos);
         case TRAMPOLINE: return draw_trampoline(pos);
+        case SPIKE:      return draw_spike(pos);
         default:         return;
     }
     
@@ -79,6 +90,8 @@ void draw_level(void) {
 }
 
 void draw_player(Player* p) {
+    if (!p->visible) return;
+    
     Vector2 pos = point_on_camera(p->pos);
     DrawRectangle(
         pos.x - PLAYER_WIDTH/2.0,
@@ -103,5 +116,6 @@ void draw_editor_cursor(void) {
 }
 
 void update_camera(void) {
-    lerp_camera(vec_add(player.pos, Vec(0, SCREEN_HEIGHT/6.0)));
+    Vector2 offset = (IsKeyDown(LOOK_DOWN_KEY)) ? Vec(0, SCREEN_HEIGHT/5.0) : Vec(0, -SCREEN_HEIGHT/8.0); 
+    lerp_camera(vec_add(player.pos, offset));
 }

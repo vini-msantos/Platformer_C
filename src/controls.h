@@ -8,5 +8,6 @@
 #define UP_KEY KEY_W
 #define JUMP_KEY KEY_SPACE
 #define DASH_KEY KEY_J
+#define LOOK_DOWN_KEY KEY_S
 
 #endif

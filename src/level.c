@@ -25,7 +25,6 @@ void level_set_rect(Level level, Rectangle rec, Tile tile) {
     }
 }
 
-
 Coord point_to_coord(Vector2 p) {
     return (Coord) {
         .i = floor(LEVEL_HEIGHT - (SCREEN_HEIGHT-p.y)/(float)TILE_SIZE),
@@ -52,13 +51,13 @@ Tile level_tile_point(Level level, Vector2 p) {
 
 bool tile_should_collide_x(Coord c, Player* p) {
     Tile tile = level_tile_coord(level, c);
-    return tile == GROUND || tile == SPIKE;
+    return tile == GROUND;
 }
 
 bool tile_should_collide_y(Coord c, Player* p) {
     Tile tile = level_tile_coord(level, c);
     if (tile == PLATFORM) return p->vel.y >= 0 && p->pos.y <= coord_to_point(c).y+TILE_SIZE/4.0;
-    return tile == GROUND || tile == SPIKE;
+    return tile == GROUND;
 }
 
 bool tile_check_collision(Coord c) {

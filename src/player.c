@@ -1,6 +1,5 @@
 #include <math.h>
 #include <raylib.h>
-#include <stdio.h>
 #include "player.h"
 #include "util.h"
 #include "level.h"
@@ -19,14 +18,21 @@ bool buffered_jump(void) {
 
 Player new_player(int x, int y) {
     return (Player) {
-        Vec(x, y),
-        Vec(0, 0),
-        false,
-        0.0
+        .pos = Vec(x, y), // Anchor: x: centered, y: alligned to bottom
+        .vel = Vec(0, 0),
+        .jumping = false,
+        .running = false,
+        .controllable = true,
+        .visible = true,
+        .collision = true,
+        .can_dash = true,
+        .dash_timer = 0.0,
+        .coyote_timer = 0.0,
     };
 }
 
 bool player_is_grounded(Player* p) {
+    if (!p->collision) return false;
     Coord c_left = point_to_coord(vec_add(p->pos, Vec(PLAYER_WIDTH/2.0, 0.5)));
     Coord c_right = point_to_coord(vec_add(p->pos, Vec(-PLAYER_WIDTH/2.0, 0.5)));
     return tile_should_collide_y(c_left, p) || tile_should_collide_y(c_right, p);
@@ -54,14 +60,28 @@ void player_collide_coin(Player* p, Coord c, Vector2 collision_point) {
     coins++;
 }
 
+void player_die(Player* p, float force) {
+    p->vel = Vec(0, -force);
+    p->controllable = false;
+    p->collision = false;
+}
+
+void player_collide_spike(Player* p) {
+    player_die(p, JUMP_FORCE);
+}
+
 void player_collide_trampoline(Player* p) {
     if (!p->jumping && p->vel.y > 0) player_jump(p, JUMP_FORCE*2);
 }
 
 void player_on_collide(Player* p, Coord c, Vector2 collision_point) {    
     Tile tile = level_tile_coord(level, c);
-    if (tile == COIN) player_collide_coin(p, c, collision_point);
-    if (tile == TRAMPOLINE) player_collide_trampoline(p);
+    switch (tile) {
+        case COIN:       return player_collide_coin(p, c, collision_point);
+        case TRAMPOLINE: return player_collide_trampoline(p);
+        case SPIKE:      return player_collide_spike(p);
+        default:         return;
+    }
 }
 
 void player_collide_solid(Player* p, Coord c, Vector2 collision_point) {
@@ -69,19 +89,11 @@ void player_collide_solid(Player* p, Coord c, Vector2 collision_point) {
     Vector2 tile_center = vec_add(coord_to_point(c), Vec(TILE_SIZE/2.0, TILE_SIZE/2.0));
     Vector2 diff = vec_sub(collision_point, tile_center);
 
-    // printf("collided block: %d,  i: %d, j: %d\n", level_tile_coord(level, c), c.i, c.j);
-    // printf("off_x: %f, off_y: %f\n", offset.x, offset.y);
-    // printf("centerx: %f, centery: %f\n", tile_center.x, tile_center.y);
-    printf("cpoint: %f, cpoint: %f\n", collision_point.x, collision_point.y);
-    printf("diff_x: %f, diff_y: %f\n", diff.x, diff.y);
-
     Coord x_neighbor = (Coord) {c.i, c.j + signf(diff.x)};
     Coord y_neighbor = (Coord) {c.i + signf(diff.y), c.j};
 
     bool collide_x = tile_should_collide_x(c, p) && !tile_should_collide_x(x_neighbor, p);
     bool collide_y = tile_should_collide_y(c, p) && !tile_should_collide_y(y_neighbor, p);
-
-    // printf("Collide x: %d, collide y: %d\n", collide_x, collide_y);
 
     if (collide_x && fabsf(diff.x) >= fabsf(diff.y)) {
         p->vel.x = 0;
@@ -107,13 +119,9 @@ void player_tile_collision(Player* p) {
         Coord coord = point_to_coord(point);
 
         if (!tile_check_collision(coord)) continue;
-        
-        printf("point index: %d\n", i);
-        
         player_check_collision(p, point, coord);     
     }
 }
-
 
 bool player_can_jump(Player* p) {
     return player_is_grounded(p) || p->coyote_timer > 0;
@@ -140,7 +148,6 @@ void player_apply_vel(Player* p) {
     p->pos.x += p->vel.x * dt;
     p->pos.y += p->vel.y * dt;
 }
-
 
 void player_handle_jumping(Player* p) {
     if (buffered_jump() && player_can_jump(p)) player_jump(p, JUMP_FORCE);
@@ -191,14 +198,6 @@ void player_handle_dashing(Player* p) {
 }
 
 void player_handle_input(Player* p) {
-    // DEBUG:
-    if (IsKeyPressed(KEY_I)) {
-        printf("\n\n\n\n");
-    }
-    if (IsKeyPressed(KEY_P)) {
-        printf("pos x: %f, pos y: %f\n", p->pos.x, p->pos.y);
-    }
-    
     player_handle_moving(p);
     player_handle_dashing(p);
     player_handle_jumping(p);
@@ -208,8 +207,7 @@ void player_normalize(Player* p) {
     p->pos.x = max(p->pos.x, PLAYER_WIDTH/2.0);
     if (p->pos.x == PLAYER_WIDTH/2.0) p->vel.x = max(p->vel.x, 0);
 
-    p->pos.y = min(p->pos.y, 2000);
-
+    if (p->pos.y >= SCREEN_HEIGHT+PLAYER_HEIGHT && p->collision) player_die(p, 1.5*JUMP_FORCE); // CHECK FELL OF MAP
     p->vel.y = min(p->vel.y, MAX_VEL_Y);
 }
 
@@ -219,10 +217,10 @@ void update_player(Player* p) {
     if (!player_is_grounded(p)) player_in_air(p);
     else player_allow_jump(p); 
 
-    player_handle_input(p);
+    if (p->controllable) player_handle_input(p);
     player_apply_vel(p);    
 
-    player_tile_collision(p);
+    if (p->collision) player_tile_collision(p);
     player_normalize(p);
 }
 
